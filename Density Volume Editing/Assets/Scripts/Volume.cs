@@ -9,6 +9,7 @@ namespace DensityVolumeEdit
     {
         public Vector3Int PointsPerChunk { get; private set; }
         public Vector3Int PointsPerChunkIncludingBorder => PointsPerChunk + Vector3Int.one * 2;
+        public Vector3Int PointsPerChunkOffset => PointsPerChunk + Vector3Int.one;
         public Vector3Int ChunkCount { get; private set; }
         public Vector3Int TotalPoints => PointsPerChunk * ChunkCount;
 
@@ -70,8 +71,26 @@ namespace DensityVolumeEdit
         public void SetDensity(Vector3Int volumePoint, float density)
         {
             UnpackVolumePoint(volumePoint, out Vector3Int chunkID, out Vector3Int localPoint);
+
+            
+
             var arrayPoint = ArrayPointFromLocalPoint(localPoint);
             Chunks[chunkID][arrayPoint.x, arrayPoint.y, arrayPoint.x] = density;
+        }
+
+        private void SetDensityForNeighbours(Vector3Int chunkID, Vector3Int localPoint, Vector3Int offsetToCheck)
+        {
+            var nPoint = localPoint - offsetToCheck * PointsPerChunk;
+            if (nPoint.x >= 0 && nPoint.x < PointsPerChunk.x &&
+                nPoint.y >= 0 && nPoint.y < PointsPerChunk.y &&
+                nPoint.z >= 0 && nPoint.z < PointsPerChunk.z)
+                return;
+
+            var nChunk = chunkID + offsetToCheck;
+            if (!Chunks.ContainsKey(nChunk))
+                return;
+
+
         }
     }
 }
