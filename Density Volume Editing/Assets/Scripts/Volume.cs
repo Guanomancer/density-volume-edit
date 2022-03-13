@@ -57,5 +57,21 @@ namespace DensityVolumeEdit
 
         public Vector3 WorldFromChunkAndPoint(Vector3Int chunkID, Vector3Int point)
             => chunkID * PointsPerChunk + point;
+
+        public void UnpackVolumePoint(Vector3Int volumePoint, out Vector3Int chunkID, out Vector3Int localPoint)
+        {
+            chunkID = new Vector3Int(volumePoint.x / PointsPerChunk.x, volumePoint.y / PointsPerChunk.y, volumePoint.z / PointsPerChunk.z);
+            localPoint = new Vector3Int(volumePoint.x % PointsPerChunk.x, volumePoint.y % PointsPerChunk.y, volumePoint.z % PointsPerChunk.z);
+        }
+
+        public Vector3Int ArrayPointFromLocalPoint(Vector3Int localPoint)
+            => localPoint + Vector3Int.one;
+
+        public void SetDensity(Vector3Int volumePoint, float density)
+        {
+            UnpackVolumePoint(volumePoint, out Vector3Int chunkID, out Vector3Int localPoint);
+            var arrayPoint = ArrayPointFromLocalPoint(localPoint);
+            Chunks[chunkID][arrayPoint.x, arrayPoint.y, arrayPoint.x] = density;
+        }
     }
 }

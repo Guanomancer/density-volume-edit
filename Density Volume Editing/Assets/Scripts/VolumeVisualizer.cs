@@ -14,9 +14,44 @@ namespace DensityVolumeEdit
         [SerializeField]
         private bool _initializeTestVolume = true;
 
+        [Header("Editing")]
+        [SerializeField, Range(0, 1)]
+        private float _editDensity;
+        [SerializeField]
+        private Vector3Int _editPoint;
+        [SerializeField]
+        private Vector3Int _editSize = Vector3Int.one;
+
+        [ContextMenu("Apply edit")]
+        private void ApplyEdit()
+        {
+            var volumePoint = Vector3Int.zero;
+            for(volumePoint.x = _editPoint.x; volumePoint.x < _editPoint.x + _editSize.x; volumePoint.x++)
+            {
+                for (volumePoint.y = _editPoint.y; volumePoint.y < _editPoint.y + _editSize.y; volumePoint.y++)
+                {
+                    for (volumePoint.z = _editPoint.z; volumePoint.z < _editPoint.z + _editSize.z; volumePoint.z++)
+                    {
+                        if (volumePoint.x < 0 || volumePoint.x >= _volume.TotalPoints.x ||
+                            volumePoint.y < 0 || volumePoint.y >= _volume.TotalPoints.y ||
+                            volumePoint.z < 0 || volumePoint.z >= _volume.TotalPoints.z)
+                            continue;
+
+                        _volume.SetDensity(volumePoint, _editDensity);
+                        UpdateVisualization();
+                    }
+                }
+            }
+        }
+        
         private void OnEnable()
         {
             InitializeVolume();
+            UpdateVisualization();
+        }
+
+        private void UpdateVisualization()
+        {
             ClearExistingVisualizers();
             InstantiateVisualizers();
         }
@@ -43,7 +78,7 @@ namespace DensityVolumeEdit
                                     var density = _volume.Chunks[chunkID][arrayPoint.x, arrayPoint.y, arrayPoint.z];
                                     var obj = Instantiate(_visualizerPrefab, worldPoint, Quaternion.identity, transform);
                                     obj.transform.localScale = (Vector3.one + Vector3.one * density) * 0.5f;
-                                    obj.name = $"Point {worldPoint}";
+                                    obj.name = $"Point {worldPoint} with density {density}";
                                 }
                             }
                         }
