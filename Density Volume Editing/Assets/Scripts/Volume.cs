@@ -72,25 +72,50 @@ namespace DensityVolumeEdit
         {
             UnpackVolumePoint(volumePoint, out Vector3Int chunkID, out Vector3Int localPoint);
 
-            
-
             var arrayPoint = ArrayPointFromLocalPoint(localPoint);
-            Chunks[chunkID][arrayPoint.x, arrayPoint.y, arrayPoint.x] = density;
+            Chunks[chunkID][arrayPoint.x, arrayPoint.y, arrayPoint.z] = density;
+
+            var neighbours = new List<Vector3Int>();
+            if (localPoint.x == 0)
+                neighbours.Add(new Vector3Int(-1, 0, 0));
+            if (localPoint.y == 0)
+                neighbours.Add(new Vector3Int(0, -1, 0));
+            if (localPoint.z == 0)
+                neighbours.Add(new Vector3Int(0, 0, -1));
+            
+            if (localPoint.x == PointsPerChunk.x - 1)
+                neighbours.Add(new Vector3Int(1, 0, 0));
+            if (localPoint.y == PointsPerChunk.y - 1)
+                neighbours.Add(new Vector3Int(0, 1, 0));
+            if (localPoint.z == PointsPerChunk.z - 1)
+                neighbours.Add(new Vector3Int(0, 0, 1));
+
+            var count = neighbours.Count;
+            for(int l = 0; l < count; l++)
+            {
+                for (int m = l + 1; m < count; m++)
+                {
+                    var index = neighbours.Count;
+                    neighbours.Add(neighbours[l] + neighbours[m]);
+                    for (int n = m + 1; n < count; n++)
+                        neighbours.Add(neighbours[index] + neighbours[n]);
+                }
+            }
+
+            foreach (var n in neighbours)
+                SetDensityForNeighbour(chunkID, localPoint, n, density);
         }
 
-        private void SetDensityForNeighbours(Vector3Int chunkID, Vector3Int localPoint, Vector3Int offsetToCheck)
+        private void SetDensityForNeighbour(Vector3Int chunkID, Vector3Int localPoint, Vector3Int offsetToCheck, float density)
         {
-            var nPoint = localPoint - offsetToCheck * PointsPerChunk;
-            if (nPoint.x >= 0 && nPoint.x < PointsPerChunk.x &&
-                nPoint.y >= 0 && nPoint.y < PointsPerChunk.y &&
-                nPoint.z >= 0 && nPoint.z < PointsPerChunk.z)
+            var newChunkID = chunkID + offsetToCheck;
+            if (!Chunks.ContainsKey(newChunkID))
                 return;
 
-            var nChunk = chunkID + offsetToCheck;
-            if (!Chunks.ContainsKey(nChunk))
-                return;
+            var newArrayPoint = ArrayPointFromLocalPoint(localPoint);
+            newArrayPoint -= offsetToCheck * PointsPerChunk;
 
-
+            Chunks[newChunkID][newArrayPoint.x, newArrayPoint.y, newArrayPoint.z] = density;
         }
     }
 }
